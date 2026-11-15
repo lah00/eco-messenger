@@ -46,7 +46,11 @@
       "short_name": "Nuevo",
       "url": "/?action=new",
       "icons": [
-        { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
       ]
     }
   ]
