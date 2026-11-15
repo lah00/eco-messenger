@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.tailwindcss.com https://unpkg.com wss://*.peerjs.com https://*.peerjs.com; img-src 'self' data: blob:; media-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com;">
+    <title>Eco - Mensajería Descentralizada E2E</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Eco">
+    <meta name="theme-color" content="#000000">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        ecoRed: '#dc2626',
+                        ecoDark: '#0a0a0a'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .anti-screenshot {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+        body.blur-protected .blur-on-shield {
+            filter: blur(24px) grayscale(100%);
+            pointer-events: none;
+            transition: filter 0.15s ease;
+        }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #dc2626; border-radius: 9999px; }
+    </style>
+</head>
+<body class="bg-black text-white dark:bg-black dark:text-white light:bg-white light:text-black transition-colors duration-300 h-screen overflow-hidden flex flex-col anti-screenshot" oncontextmenu="return false;">
+
+    <!-- PANTALLA DE LOGIN / REGISTRO CRIPTOGRÁFICO -->
+    <div id="auth-screen" class="flex-1 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="max-w-md w-full bg-neutral-950 dark:bg-neutral-950 light:bg-neutral-100 p-7 rounded-3xl shadow-2xl border border-neutral-800 dark:border-neutral-800 light:border-neutral-300">
+            <div class="text-center flex flex-col items-center mb-5">
+                <svg class="w-20 h-20 mb-2.5 shadow-2xl rounded-3xl" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="500" height="500" rx="115" fill="#DC2626"/>
+                    <path d="M185 375 L265 320 L185 260 Z" fill="#0A0A0A"/>
+                    <path d="M350 240 C350 175 300 135 245 135 C185 135 145 185 145 245 C145 305 190 355 250 355 C295 355 330 330 345 300" stroke="#FFFFFF" stroke-width="46" stroke-linecap="round" fill="none"/>
+                    <rect x="175" y="222" width="185" height="42" fill="#0A0A0A"/>
+                    <path d="M235 264 L330 322" stroke="#FFFFFF" stroke-width="42" stroke-linecap="round"/>
+                </svg>
+                <h1 class="text-3xl font-black tracking-widest text-red-600">ECO</h1>
+                <p class="text-neutral-400 text-[11px] mt-0.5 font-mono">Bandeja P2P • Directorio por Usuario • AES-256-GCM</p>
+            </div>
+
+            <div class="mb-5 p-3.5 rounded-2xl bg-black dark:bg-black light:bg-white border border-neutral-800 dark:border-neutral-800 light:border-neutral-300">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-center text-red-500 mb-2.5 font-mono">
+                    ⬇ Instalar Aplicación Móvil
+                </p>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button type="button" onclick="downloadAndroid()" class="flex items-center justify-center gap-2 bg-neutral-900 hover:bg-red-600 text-white border border-red-600/40 py-2.5 px-3 rounded-xl transition font-bold text-xs shadow-md group">
+                        <span>🤖</span>
+                        <div class="text-left leading-tight">
+                            <div class="text-xs font-black">Android</div>
+                            <div class="text-[9px] text-neutral-400 group-hover:text-white font-mono">Instalar APK</div>
+                        </div>
+                    </button>
+                    <button type="button" onclick="downloadIPhone()" class="flex items-center justify-center gap-2 bg-neutral-900 hover:bg-red-600 text-white border border-red-600/40 py-2.5 px-3 rounded-xl transition font-bold text-xs shadow-md group">
+                        <span>🍎</span>
+                        <div class="text-left leading-tight">
+                            <div class="text-xs font-black">iPhone</div>
+                            <div class="text-[9px] text-neutral-400 group-hover:text-white font-mono">Añadir Inicio</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+            
+            <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1">Tu Nombre de Usuario (@usuario)</label>
+                    <input type="text" id="username" required autocomplete="off" placeholder="Ej. jorman_rebelde" class="w-full bg-black dark:bg-black light:bg-white border border-neutral-800 dark:border-neutral-800 light:border-neutral-300 rounded-xl px-4 py-3 focus:outline-none focus:border-red-600 text-sm font-mono lowercase">
+                    <p class="text-[10px] text-neutral-500 mt-1">Con este nombre exacto te podrán buscar tus contactos sin pedir números.</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1">Contraseña de Bóveda Local (AES-256)</label>
+                    <input type="password" id="password" required autocomplete="off" placeholder="Mínimo 6 caracteres" minlength="6" class="w-full bg-black dark:bg-black light:bg-white border border-neutral-800 dark:border-neutral-800 light:border-neutral-300 rounded-xl px-4 py-3 focus:outline-none focus:border-red-600 text-sm font-mono">
+                </div>
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-red-900/50 uppercase tracking-wider text-sm">
+                    Abrir Bandeja Eco
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- APLICACIÓN PRINCIPAL ESTILO SESSION / SIGNAL -->
+    <div id="app-screen" class="hidden flex-1 flex h-screen max-w-6xl mx-auto w-full border-x border-neutral-900 dark:border-neutral-900 light:border-neutral-200 overflow-hidden blur-on-shield">
+        
+        <!-- COLUMNA IZQUIERDA: BANDEJA DE MENSAJES Y BUSCADOR -->
+        <aside id="inbox-panel" class="w-full md:w-80 lg:w-96 flex flex-col bg-neutral-950 dark:bg-neutral-950 light:bg-neutral-50 border-r border-neutral-900 dark:border-neutral-900 light:border-neutral-200 h-full">
+            <div class="p-3.5 border-b border-neutral-900 dark:border-neutral-900 light:border-neutral-200 flex items-center justify-between bg-black/90 dark:bg-black/90 light:bg-white">
+                <div class="flex items-center space-x-2.5">
+                    <svg class="w-9 h-9 rounded-xl shadow-md shrink-0" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="500" height="500" rx="115" fill="#DC2626"/>
+                        <path d="M185 375 L265 320 L185 260 Z" fill="#0A0A0A"/>
+                        <path d="M350 240 C350 175 300 135 245 135 C185 135 145 185 145 245 C145 305 190 355 250 355 C295 355 330 330 345 300" stroke="#FFFFFF" stroke-width="46" stroke-linecap="round" fill="none"/>
+                        <rect x="175" y="222" width="185" height="42" fill="#0A0A0A"/>
+                        <path d="M235 264 L330 322" stroke="#FFFFFF" stroke-width="42" stroke-linecap="round"/>
+                    </svg>
+                    <div class="overflow-hidden">
+                        <div class="flex items-center gap-1.5">
+                            <h2 class="font-bold text-xs font-mono truncate" id="current-user-display">@usuario</h2>
+                            <span id="online-dot" class="w-2 h-2 rounded-full bg-amber-500" title="Conectando a red P2P..."></span>
+                        </div>
+                        <p class="text-[10px] text-neutral-400 font-mono truncate" id="node-status-text">Registrando usuario...</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1">
+                    <button onclick="openDownloadModal()" class="p-2 rounded-xl bg-neutral-900 dark:bg-neutral-900 light:bg-neutral-200 text-red-500 text-xs font-bold border border-red-600/30">📲</button>
+                    <button onclick="toggleTheme()" class="p-2 rounded-xl bg-neutral-900 dark:bg-neutral-900 light:bg-neutral-200 text-xs border border-neutral-800">🌓</button>
+                    <button onclick="panicWipe()" class="p-2 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700" title="Purgar datos">🔥</button>
+                </div>
+            </div>
+
+            <div class="p-3 border-b border-neutral-900 dark:border-neutral-900 light:border-neutral-200 bg-neutral-950/60 dark:bg-neutral-950/60 light:bg-neutral-100">
+                <label class="block text-[10px] font-mono uppercase tracking-wider text-neutral-400 mb-1.5">🔍 Buscar o Agregar por @Usuario</label>
+                <form onsubmit="searchAndAddContact(event)" class="flex gap-1.5">
+                    <input type="text" id="search-username-input" placeholder="Escribe el @usuario exacto..." class="flex-1 bg-black dark:bg-black light:bg-white border border-neutral-800 dark:border-neutral-800 light:border-neutral-300 rounded-xl px-3 py-2 text-xs font-mono focus:outline-none focus:border-red-600 lowercase">
+                    <button type="submit" class="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition shrink-0">Chatear</button>
+                </form>
+                <input type="text" id="filter-inbox-input" oninput="renderInbox()" placeholder="Filtrar mis conversaciones..." class="w-full mt-2 bg-black/50 dark:bg-black/50 light:bg-white border border-neutral-900 dark:border-neutral-900 light:border-neutral-300 rounded-lg px-3 py-1.5 text-[11px] focus:outline-none focus:border-neutral-700">
+            </div>
+
+            <div class="px-3 py-2 text-[10px] font-mono uppercase tracking-wider text-neutral-500 flex justify-between items-center">
+                <span>Bandeja de Mensajes Cifrados</span>
+                <span id="unread-total-badge" class="hidden bg-red-600 text-white px-1.5 py-0.5 rounded-full text-[9px] font-bold">0</span>
+            </div>
+            <div id="conversations-list" class="flex-1 overflow-y-auto divide-y divide-neutral-900/60 dark:divide-neutral-900/60 light:divide-neutral-200"></div>
+        </aside>
+
+        <!-- COLUMNA DERECHA: CHAT ACTIVO -->
+        <main id="chat-panel" class="hidden md:flex flex-1 flex-col bg-black dark:bg-black light:bg-white h-full">
+            <div id="empty-chat-state" class="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                <div class="w-16 h-16 rounded-3xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-2xl mb-3">🔒</div>
+                <h3 class="text-base font-bold text-neutral-200 dark:text-neutral-200 light:text-neutral-800">Selecciona o busca un @usuario</h3>
+                <p class="text-xs text-neutral-500 max-w-xs mt-1 leading-relaxed">Escribe el nombre de usuario de cualquier contacto arriba a la izquierda para establecer un túnel directo P2P cifrado.</p>
+            </div>
+
+            <div id="active-chat-view" class="hidden flex-1 flex flex-col h-full">
+                <header class="bg-neutral-950 dark:bg-neutral-950 light:bg-neutral-100 border-b border-neutral-900 dark:border-neutral-900 light:border-neutral-200 p-3 flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <button onclick="backToInboxMobile()" class="md:hidden p-2 rounded-xl bg-neutral-900 text-white text-xs font-bold">←</button>
+                        <div id="active-contact-avatar" class="w-9 h-9 rounded-full bg-red-600 flex items-center justify-center font-bold text-white text-sm font-mono uppercase">U</div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 id="active-contact-name" class="font-bold text-sm font-mono">@contacto</h3>
+                                <span id="active-contact-status" class="text-[10px] font-mono text-neutral-400">● P2P</span>
+                            </div>
+                            <p class="text-[10px] text-neutral-500 font-mono">Llave E2E derivada automáticamente • Sin servidor central</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="reconnectActivePeer()" class="px-2.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-[10px] font-mono border border-neutral-800 text-neutral-300">🔄 Sincronizar</button>
+                        <button onclick="deleteCurrentConversation()" class="p-1.5 rounded-xl bg-neutral-900 hover:bg-red-950 text-red-400 text-xs border border-neutral-800">🗑️</button>
+                    </div>
+                </header>
+
+                <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+
+                <footer class="bg-neutral-950 dark:bg-neutral-950 light:bg-neutral-100 border-t border-neutral-900 dark:border-neutral-900 light:border-neutral-300 p-3">
+                    <div class="flex items-center justify-between mb-2 px-1 text-xs text-neutral-400">
+                        <div class="flex items-center space-x-2">
+                            <label class="cursor-pointer hover:text-red-500 flex items-center gap-1.5 bg-black dark:bg-black light:bg-white border border-neutral-800 dark:border-neutral-800 light:border-neutral-300 px-3 py-1.5 rounded-xl transition">
+                                📎 <span>Archivo</span>
+                                <input type="file" id="media-input" class="hidden" onchange="handleFileUpload(event)">
+                            </label>
+                            <span id="attached-file-name" class="text-red-500 truncate max-w-[140px] font-mono text-[11px]"></span>
+                        </div>
+                        <div class="flex items-center space-x-1.5">
+                            <span>⏳ Desaparecer:</span>
+                            <select id="disappear-timer" class="bg-black dark:bg-black light:bg-white text-white dark:text-white light:text-black border border-neutral-800 dark:border-neutral-800 light:border-neutral-300 rounded-lg px-2 py-1 text-xs font-mono">
+                                <option value="0">Desactivado</option>
+                                <option value="10">10 seg</option>
+                                <option value="30">30 seg</option>
+                                <option value="60">1 min</option>
+                            </select>
+                        </div>
+                    </div>
+                    <form onsubmit="sendMessage(event)" class="flex items-center space-x-2">
+                        <input type="text" id="message-input" autocomplete="off" placeholder="Escribe un mensaje privado..." class="flex-1 bg-black dark:bg-black light:bg-white border border-neutral-800 dark:border-neutral-800 light:border-neutral-300 rounded-xl px-4 py-3 focus:outline-none focus:border-red-600 text-sm">
+                        <button type="submit" class="bg-red-600 hover:bg-red-500 text-white px-5 py-3 rounded-xl font-bold transition shadow-lg shadow-red-900/40 text-sm">Enviar</button>
+                    </form>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL DE DESCARGA -->
+    <div id="install-modal" class="fixed inset-0 bg-black/95 z-50 hidden flex items-center justify-center p-4">
+        <div class="max-w-md w-full bg-neutral-950 border-2 border-red-600 p-6 rounded-3xl shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="install-modal-title" class="text-base font-black text-red-500 uppercase tracking-wider">Instalar Eco</h3>
+                <button onclick="closeInstallModal()" class="text-neutral-400 hover:text-white text-sm font-bold">✕</button>
+            </div>
+            <div id="install-modal-body" class="text-xs text-neutral-300 space-y-3 leading-relaxed">
+                <p>Para instalar Eco como aplicación nativa en tu dispositivo:</p>
+                <p class="font-bold text-white">🤖 En Android (Chrome):</p>
+                <p>Toca los tres puntos (⋮) en la esquina superior derecha del navegador y selecciona <b>"Instalar aplicación"</b> o <b>"Añadir a la pantalla principal"</b>.</p>
+                <p class="font-bold text-white mt-2">🍎 En iPhone (Safari):</p>
+                <p>Toca el botón Compartir y selecciona <b>"Añadir a la pantalla de inicio"</b>.</p>
+            </div>
+            <div class="mt-5">
+                <button onclick="closeInstallModal()" class="w-full bg-red-600 hover:bg-red-500 text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider">Entendido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ESCUDO ANTI-CAPTURA -->
+    <div id="screenshot-shield-alert" class="fixed inset-0 bg-black/98 z-50 hidden flex items-center justify-center p-6 text-center">
+        <div class="max-w-sm bg-neutral-950 border-2 border-red-600 p-6 rounded-3xl shadow-2xl">
+            <span class="text-4xl">🛡️</span>
+            <h3 class="text-lg font-black text-red-500 mt-3 uppercase tracking-wider">Conversación Protegida</h3>
+            <p class="text-neutral-300 text-xs mt-2 leading-relaxed">Eco difuminó automáticamente tus conversaciones para impedir capturas de pantalla.</p>
+            <button onclick="dismissShield()" class="mt-5 w-full bg-red-600 hover:bg-red-500 text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider">Volver al Chat</button>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let vaultMasterKey = null;
+        let peer = null;
+        let activeContact = null;
+        let currentAttachment = null;
+        const peerConnections = {};
+        let conversations = {};
+        const PEER_PREFIX = "eco-global-net-2026-";
+        const SALT_VAULT = new TextEncoder().encode("ECO_VAULT_MASTER_SALT_2026");
+
+        function normalizeUsername(name) {
+            return name.trim().toLowerCase().replace(/^@/, '').replace(/[^a-z0-9_.-]/g, '');
+        }
+
+        function sanitizeHTML(str) {
+            if (!str) return '';
+            return str.replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag] || tag));
+        }
+
+        async function deriveKeyFromSecret(secretStr, saltBytes) {
+            const enc = new TextEncoder();
+            const keyMaterial = await window.crypto.subtle.importKey("raw", enc.encode(secretStr), { name: "PBKDF2" }, false, ["deriveKey"]);
+            return window.crypto.subtle.deriveKey({ name: "PBKDF2", salt: saltBytes, iterations: 100000, hash: "SHA-256" }, keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+        }
+
+        async function getPairConversationKey(userA, userB) {
+            const sortedPair = [normalizeUsername(userA), normalizeUsername(userB)].sort().join("::ECO_E2E_TUNNEL::");
+            return deriveKeyFromSecret(sortedPair, SALT_VAULT);
+        }
+
+        function bufToBase64(buf) {
+            return btoa(Array.from(new Uint8Array(buf)).map(b => String.fromCharCode(b)).join(''));
+        }
+
+        function base64ToBuf(b64) {
+            const binStr = atob(b64);
+            const bytes = new Uint8Array(binStr.length);
+            for (let i = 0; i < binStr.length; i++) bytes[i] = binStr.charCodeAt(i);
+            return bytes.buffer;
+        }
+
+        async function encryptWithKey(obj, key) {
+            const iv = window.crypto.getRandomValues(new Uint8Array(12));
+            const encoded = new TextEncoder().encode(JSON.stringify(obj));
+            const ciphertext = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encoded);
+            return { iv: bufToBase64(iv), data: bufToBase64(ciphertext) };
+        }
+
+        async function decryptWithKey(encryptedObj, key) {
+            try {
+                const iv = new Uint8Array(base64ToBuf(encryptedObj.iv));
+                const data = base64ToBuf(encryptedObj.data);
+                const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+                return JSON.parse(new TextDecoder().decode(decrypted));
+            } catch (e) { return null; }
+        }
+
+        async function handleAuth(e) {
+            e.preventDefault();
+            const rawUser = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const cleanUser = normalizeUsername(rawUser);
+            if (!cleanUser || !password) { alert('Ingresa un usuario válido.'); return; }
+            currentUser = cleanUser;
+            vaultMasterKey = await deriveKeyFromSecret(currentUser + "::" + password, SALT_VAULT);
+            document.getElementById('current-user-display').textContent = '@' + currentUser;
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.remove('hidden');
+            await loadEncryptedVault();
+            initUserDirectoryNode();
+        }
+
+        async function loadEncryptedVault() {
+            const storageKey = `eco_vault_v3_${currentUser}`;
+            const storedRaw = localStorage.getItem(storageKey);
+            if (storedRaw) {
+                const parsed = JSON.parse(storedRaw);
+                const dec = await decryptWithKey(parsed, vaultMasterKey);
+                if (dec) { conversations = dec; } else { alert('⚠️ Contraseña incorrecta.'); conversations = {}; }
+            }
+            if (Object.keys(conversations).length === 0) {
+                conversations['sistema_eco'] = {
+                    username: 'sistema_eco', unread: 0,
+                    lastTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    messages: [{ id: Date.now(), sender: 'sistema_eco', text: `Bienvenido a Eco, @${currentUser}. Escribe el @usuario de tu contacto arriba para iniciar.`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), disappearSeconds: 0 }]
+                };
+                await saveEncryptedVault();
+            }
+            renderInbox();
+        }
+
+        async function saveEncryptedVault() {
+            if (!currentUser || !vaultMasterKey) return;
+            const storageKey = `eco_vault_v3_${currentUser}`;
+            const enc = await encryptWithKey(conversations, vaultMasterKey);
+            localStorage.setItem(storageKey, JSON.stringify(enc));
+        }
+
+        function initUserDirectoryNode() {
+            peer = new Peer(PEER_PREFIX + currentUser);
+            peer.on('open', () => {
+                document.getElementById('online-dot').className = 'w-2 h-2 rounded-full bg-emerald-500';
+                document.getElementById('node-status-text').textContent = 'En línea • @' + currentUser;
+            });
+            peer.on('connection', (conn) => {
+                if (conn.peer.startsWith(PEER_PREFIX)) bindConnectionEvents(conn.peer.replace(PEER_PREFIX, ''), conn);
+            });
+        }
+
+        function ensureConversationExists(username) {
+            const clean = normalizeUsername(username);
+            if (!conversations[clean]) {
+                conversations[clean] = { username: clean, unread: 0, lastTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), messages: [] };
+            }
+            return clean;
+        }
+
+        function bindConnectionEvents(remoteUsername, conn) {
+            const cleanRemote = ensureConversationExists(remoteUsername);
+            peerConnections[cleanRemote] = conn;
+            conn.on('open', () => { updateContactStatusUI(cleanRemote, true); renderInbox(); });
+            conn.on('data', async (encryptedPayload) => {
+                const pairKey = await getPairConversationKey(currentUser, cleanRemote);
+                const decMsg = await decryptWithKey(encryptedPayload, pairKey);
+                if (!decMsg) return;
+                conversations[cleanRemote].messages.push(decMsg);
+                conversations[cleanRemote].lastTime = decMsg.time;
+                if (activeContact !== cleanRemote) conversations[cleanRemote].unread++;
+                await saveEncryptedVault();
+                renderInbox();
+                if (activeContact === cleanRemote) renderActiveChatMessages();
+                if (decMsg.disappearSeconds > 0) scheduleMessageDestruction(cleanRemote, decMsg.id, decMsg.disappearSeconds);
+            });
+            conn.on('close', () => { updateContactStatusUI(cleanRemote, false); renderInbox(); });
+        }
+
+        function connectToUsername(targetUsername) {
+            const cleanTarget = normalizeUsername(targetUsername);
+            if (!peer || cleanTarget === 'sistema_eco' || cleanTarget === currentUser) return;
+            if (peerConnections[cleanTarget]?.open) return;
+            bindConnectionEvents(cleanTarget, peer.connect(PEER_PREFIX + cleanTarget, { reliable: true }));
+        }
+
+        function reconnectActivePeer() { if (activeContact) connectToUsername(activeContact); }
+
+        function updateContactStatusUI(username, isOnline) {
+            if (activeContact === username) {
+                const sb = document.getElementById('active-contact-status');
+                if (username === 'sistema_eco') { sb.textContent = '● Bot Oficial'; sb.className = 'text-[10px] font-mono text-red-400'; }
+                else if (isOnline) { sb.textContent = '🟢 Conectado P2P'; sb.className = 'text-[10px] font-mono text-emerald-400 font-bold'; }
+                else { sb.textContent = '⚪ Desconectado'; sb.className = 'text-[10px] font-mono text-neutral-400'; }
+            }
+        }
+
+        async function searchAndAddContact(e) {
+            e.preventDefault();
+            const input = document.getElementById('search-username-input');
+            const target = normalizeUsername(input.value);
+            if (!target || target === currentUser) return;
+            ensureConversationExists(target);
+            await saveEncryptedVault();
+            input.value = '';
+            renderInbox();
+            openConversation(target);
+        }
+
+        function renderInbox() {
+            const listEl = document.getElementById('conversations-list');
+            const filterText = (document.getElementById('filter-inbox-input').value || '').toLowerCase().trim();
+            listEl.innerHTML = '';
+            let totalUnread = 0;
+            Object.values(conversations).sort((a, b) => (b.messages.at(-1)?.id || 0) - (a.messages.at(-1)?.id || 0)).forEach(conv => {
+                totalUnread += (conv.unread || 0);
+                if (filterText && !conv.username.includes(filterText)) return;
+                const lastMsg = conv.messages.at(-1);
+                const item = document.createElement('div');
+                item.onclick = () => openConversation(conv.username);
+                item.className = `p-3.5 flex items-center justify-between cursor-pointer transition ${activeContact === conv.username ? 'bg-red-600/15 border-l-4 border-red-600' : 'hover:bg-neutral-900/70'}`;
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3 overflow-hidden pr-2">
+                        <div class="relative shrink-0">
+                            <div class="w-11 h-11 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-center font-bold text-red-500 font-mono uppercase">${conv.username.charAt(0)}</div>
+                            <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-black ${conv.username === 'sistema_eco' || peerConnections[conv.username]?.open ? 'bg-emerald-500' : 'bg-neutral-600'}"></span>
+                        </div>
+                        <div class="overflow-hidden">
+                            <h4 class="font-bold text-xs font-mono truncate">@${conv.username}</h4>
+                            <p class="text-[11px] text-neutral-400 truncate mt-0.5">${lastMsg ? (lastMsg.text || '📎 Archivo') : 'Inicia chat...'}</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end shrink-0 space-y-1">
+                        <span class="text-[9px] font-mono text-neutral-500">${conv.lastTime || ''}</span>
+                        ${conv.unread > 0 ? `<span class="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">${conv.unread}</span>` : ''}
+                    </div>`;
+                listEl.appendChild(item);
+            });
+            const badge = document.getElementById('unread-total-badge');
+            badge.textContent = totalUnread;
+            badge.classList.toggle('hidden', totalUnread === 0);
+        }
+
+        async function openConversation(username) {
+            activeContact = username;
+            ensureConversationExists(username);
+            conversations[username].unread = 0;
+            await saveEncryptedVault();
+            document.getElementById('inbox-panel').classList.add('hidden', 'md:flex');
+            document.getElementById('chat-panel').classList.remove('hidden');
+            document.getElementById('chat-panel').classList.add('flex');
+            document.getElementById('empty-chat-state').classList.add('hidden');
+            document.getElementById('active-chat-view').classList.remove('hidden');
+            document.getElementById('active-contact-name').textContent = '@' + username;
+            document.getElementById('active-contact-avatar').textContent = username.charAt(0).toUpperCase();
+            updateContactStatusUI(username, peerConnections[username]?.open);
+            connectToUsername(username);
+            renderInbox();
+            renderActiveChatMessages();
+        }
+
+        function backToInboxMobile() {
+            activeContact = null;
+            document.getElementById('chat-panel').classList.add('hidden');
+            document.getElementById('inbox-panel').classList.remove('hidden');
+            renderInbox();
+        }
+
+        async function deleteCurrentConversation() {
+            if (!activeContact || !confirm(`¿Eliminar chat con @${activeContact}?`)) return;
+            delete conversations[activeContact];
+            await saveEncryptedVault();
+            backToInboxMobile();
+            document.getElementById('active-chat-view').classList.add('hidden');
+            document.getElementById('empty-chat-state').classList.remove('hidden');
+            renderInbox();
+        }
+
+        async function sendMessage(e) {
+            e.preventDefault();
+            if (!activeContact) return;
+            const input = document.getElementById('message-input');
+            const rawText = input.value.trim();
+            if (!rawText && !currentAttachment) return;
+            const disappearSeconds = parseInt(document.getElementById('disappear-timer').value);
+            const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const newMsg = { id: Date.now() + Math.floor(Math.random() * 1000), sender: currentUser, text: sanitizeHTML(rawText), attachment: currentAttachment, time: nowTime, disappearSeconds };
+            
+            conversations[activeContact].messages.push(newMsg);
+            conversations[activeContact].lastTime = nowTime;
+            await saveEncryptedVault();
+
+            const conn = peerConnections[activeContact];
+            if (conn?.open) {
+                conn.send(await encryptWithKey(newMsg, await getPairConversationKey(currentUser, activeContact)));
+            } else { connectToUsername(activeContact); }
+
+            input.value = '';
+            currentAttachment = null;
+            document.getElementById('attached-file-name').textContent = '';
+            renderInbox();
+            renderActiveChatMessages();
+            if (disappearSeconds > 0) scheduleMessageDestruction(activeContact, newMsg.id, disappearSeconds);
+        }
+
+        function scheduleMessageDestruction(contact, msgId, seconds) {
+            setTimeout(async () => {
+                if (conversations[contact]) {
+                    conversations[contact].messages = conversations[contact].messages.filter(m => m.id !== msgId);
+                    await saveEncryptedVault();
+                    renderInbox();
+                    if (activeContact === contact) renderActiveChatMessages();
+                }
+            }, seconds * 1000);
+        }
+
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file || file.size > 5 * 1024 * 1024) { alert('Máximo 5 MB por archivo.'); return; }
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                currentAttachment = { name: sanitizeHTML(file.name), type: file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'file', data: ev.target.result };
+                document.getElementById('attached-file-name').textContent = file.name;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function renderActiveChatMessages() {
+            const container = document.getElementById('chat-container');
+            container.innerHTML = '';
+            if (!activeContact || !conversations[activeContact]) return;
+            conversations[activeContact].messages.forEach(msg => {
+                const isMe = msg.sender === currentUser;
+                const div = document.createElement('div');
+                div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
+                let mediaHTML = '';
+                if (msg.attachment) {
+                    if (msg.attachment.type === 'image') mediaHTML = `<img src="${msg.attachment.data}" class="max-w-xs rounded-xl mt-2 border border-neutral-800">`;
+                    else if (msg.attachment.type === 'video') mediaHTML = `<video src="${msg.attachment.data}" controls class="max-w-xs rounded-xl mt-2 border border-neutral-800"></video>`;
+                    else mediaHTML = `<a href="${msg.attachment.data}" download="${msg.attachment.name}" class="block mt-2 text-xs bg-black/60 p-2.5 rounded-xl underline text-white font-mono">📄 ${msg.attachment.name}</a>`;
+                }
+                div.innerHTML = `
+                    <div class="max-w-[82%] rounded-2xl px-4 py-2.5 ${isMe ? 'bg-red-600 text-white rounded-br-none' : 'bg-neutral-900 text-white border border-neutral-800 rounded-bl-none'} shadow-lg">
+                        <div class="text-[10px] font-mono font-bold opacity-80 mb-0.5 flex items-center justify-between gap-2">
+                            <span>@${msg.sender}</span>
+                            ${msg.disappearSeconds > 0 ? `<span class="text-amber-300">⏳ ${msg.disappearSeconds}s</span>` : ''}
+                        </div>
+                        ${msg.text ? `<p class="text-sm leading-relaxed break-words">${msg.text}</p>` : ''}
+                        ${mediaHTML}
+                        <div class="text-[9px] font-mono text-right mt-1 opacity-60">${msg.time} • E2E</div>
+                    </div>`;
+                container.appendChild(div);
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+
+        let deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; });
+
+        function downloadAndroid() {
+            if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; return; }
+            document.getElementById('install-modal').classList.remove('hidden');
+        }
+
+        function downloadIPhone() {
+            document.getElementById('install-modal').classList.remove('hidden');
+        }
+
+        function openDownloadModal() { document.getElementById('install-modal').classList.remove('hidden'); }
+        function closeInstallModal() { document.getElementById('install-modal').classList.add('hidden'); }
+
+        function panicWipe() {
+            if (confirm('⚠️ ¿Purgar todos los datos e historiales locales?')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            document.documentElement.classList.toggle('light');
+        }
+
+        function activateShield() {
+            document.body.classList.add('blur-protected');
+            document.getElementById('screenshot-shield-alert').classList.remove('hidden');
+        }
+
+        function dismissShield() {
+            document.getElementById('screenshot-shield-alert').classList.add('hidden');
+            document.body.classList.remove('blur-protected');
+        }
+
+        window.addEventListener('blur', () => { if (currentUser) activateShield(); });
+        document.addEventListener('visibilitychange', () => { if (document.hidden && currentUser) activateShield(); });
+    </script>
+</body>
+</html>
